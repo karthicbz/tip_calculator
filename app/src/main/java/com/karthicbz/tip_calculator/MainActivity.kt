@@ -11,10 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -38,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,27 +55,37 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Tip_calculatorTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        CardHeader(modifier = Modifier.padding(innerPadding))
-                        CardBody(modifier = Modifier.padding(innerPadding))
-                    }
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                ) { innerPadding ->
+                    Content(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
     }
 }
 
+@Composable
+fun Content(modifier: Modifier) {
+    Column(modifier = Modifier.padding(16.dp)) {
+        CardHeader()
+        Spacer(modifier = Modifier.height(16.dp))
+        CardBody()
+    }
+}
+
 @Preview
 @Composable
-fun CardHeader(modifier: Modifier = Modifier) {
+fun CardHeader() {
     Card(
-        modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(150.dp),
         elevation = CardDefaults.cardElevation(draggedElevation = 3.dp)
     ) {
-        Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(text = "$100", fontSize = 50.sp)
         }
     }
@@ -80,15 +93,15 @@ fun CardHeader(modifier: Modifier = Modifier) {
 
 @Preview
 @Composable
-fun CardBody(modifier: Modifier = Modifier) {
+fun CardBody() {
     val sliderPosition = remember { mutableFloatStateOf(50f) }
     val text = remember { mutableStateOf<String>("") }
     val numOfPeopleCount = remember { mutableIntStateOf(2) }
 
 
-    Column(modifier.padding(8.dp)) {
+    Column {
         TextField(
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             value = text.value,
             onValueChange = { text.value = it },
             label = { Text(text = "Enter Bill Amount") },
@@ -97,17 +110,17 @@ fun CardBody(modifier: Modifier = Modifier) {
                 imeAction = ImeAction.Done
             )
         )
+        Spacer(modifier = Modifier.height(16.dp))
         if (text.value != "") {
             Surface(
-                modifier
-                    .fillMaxWidth()
-                    .height(500.dp)
+                modifier = Modifier
+                    .wrapContentHeight()
                     .border(BorderStroke(1.dp, Color.Gray), RoundedCornerShape(8.dp))
             ) {
-                Column(modifier.padding(8.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
                     Text("Number of People", fontSize = 16.sp)
                     Row(
-                        modifier
+                        modifier = Modifier
                             .wrapContentWidth()
                             .align(alignment = Alignment.CenterHorizontally),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -129,15 +142,18 @@ fun CardBody(modifier: Modifier = Modifier) {
                     }
                     Text("Tip %", fontSize = 16.sp)
                     Column(
-                        modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("${sliderPosition.floatValue.toInt()} %", fontSize = 14.sp)
+                        Text(
+                            "${sliderPosition.floatValue.toInt()} %",
+                            fontSize = 16.sp,
+                        )
                         Slider(
+                            modifier = Modifier.padding(top = 16.dp),
                             value = sliderPosition.floatValue,
                             onValueChange = { sliderPosition.floatValue = it },
                             valueRange = 0f..100f,
-//                        steps = 10
                         )
                     }
                 }
