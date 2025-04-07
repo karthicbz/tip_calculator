@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,12 +30,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,16 +74,36 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Content(modifier: Modifier) {
+    val tipTotal = remember { mutableIntStateOf(0) }
+    val sliderPosition = remember { mutableFloatStateOf(50f) }
+    val text = remember { mutableStateOf<String>("") }
+    val numOfPeopleCount = remember { mutableIntStateOf(2) }
+
     Column(modifier = Modifier.padding(16.dp)) {
-        CardHeader()
+        CardHeader(tipTotal)
         Spacer(modifier = Modifier.height(16.dp))
-        CardBody()
+        CardBody(text, sliderPosition, numOfPeopleCount, tipTotal)
+    }
+}
+
+fun calculateTip(
+    tipTotal: MutableIntState,
+    sliderPosition: MutableFloatState,
+    text: MutableState<String>,
+    numOfPeopleCount: MutableIntState
+) {
+    if (text.value != "") {
+        tipTotal.intValue =
+            ((text.value.toFloat() + sliderPosition.floatValue) / numOfPeopleCount.intValue).toInt()
+    } else {
+        tipTotal.intValue = 0
     }
 }
 
 @Preview
 @Composable
-fun CardHeader() {
+fun CardHeader(tipTotal: MutableIntState) {
+    // TODO: add text "total tip per person" above tiptotal
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -86,36 +111,45 @@ fun CardHeader() {
         elevation = CardDefaults.cardElevation(draggedElevation = 3.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(text = "$100", fontSize = 50.sp)
+            Text(text = "$${tipTotal.intValue}", fontSize = 50.sp)
         }
     }
 }
 
 @Preview
 @Composable
-fun CardBody() {
-    val sliderPosition = remember { mutableFloatStateOf(50f) }
-    val text = remember { mutableStateOf<String>("") }
-    val numOfPeopleCount = remember { mutableIntStateOf(2) }
-
-
+fun CardBody(
+    text: MutableState<String>,
+    sliderPosition: MutableFloatState,
+    numOfPeopleCount: MutableIntState,
+    tipTotal: MutableIntState
+) {
     Column {
-        TextField(
+        OutlinedTextField(
+            //Todo:remove focus on keyboard hide
             modifier = Modifier.fillMaxWidth(),
             value = text.value,
-            onValueChange = { text.value = it },
+            onValueChange = {
+                text.value = it; calculateTip(
+                tipTotal,
+                sliderPosition,
+                text,
+                numOfPeopleCount
+            )
+            },
             label = { Text(text = "Enter Bill Amount") },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions.Default,
         )
         Spacer(modifier = Modifier.height(16.dp))
         if (text.value != "") {
             Surface(
                 modifier = Modifier
                     .wrapContentHeight()
-                    .border(BorderStroke(1.dp, Color.Gray), RoundedCornerShape(8.dp))
+                    .border(BorderStroke(1.5.dp, Color.Gray), RoundedCornerShape(8.dp))
             ) {
                 Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
                     Text("Number of People", fontSize = 16.sp)
@@ -128,6 +162,7 @@ fun CardBody() {
                     ) {
                         ElevatedButton(onClick = {
                             numOfPeopleCount.intValue += 1
+                            calculateTip(tipTotal, sliderPosition, text, numOfPeopleCount)
                         }) {
                             Icon(Icons.Filled.Add, contentDescription = "Add")
                         }
@@ -135,6 +170,7 @@ fun CardBody() {
                         ElevatedButton(onClick = {
                             if (numOfPeopleCount.intValue > 1) {
                                 numOfPeopleCount.intValue -= 1
+                                calculateTip(tipTotal, sliderPosition, text, numOfPeopleCount)
                             }
                         }) {
                             Icon(Icons.Default.Remove, contentDescription = "Remove")
@@ -152,7 +188,14 @@ fun CardBody() {
                         Slider(
                             modifier = Modifier.padding(top = 16.dp),
                             value = sliderPosition.floatValue,
-                            onValueChange = { sliderPosition.floatValue = it },
+                            onValueChange = {
+                                sliderPosition.floatValue = it; calculateTip(
+                                tipTotal,
+                                sliderPosition,
+                                text,
+                                numOfPeopleCount
+                            )
+                            },
                             valueRange = 0f..100f,
                         )
                     }
