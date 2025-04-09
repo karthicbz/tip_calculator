@@ -2,6 +2,7 @@ package com.karthicbz.tip_calculator
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
@@ -30,6 +31,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -46,12 +48,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.karthicbz.tip_calculator.components.CustomElevatedButton
 import com.karthicbz.tip_calculator.ui.theme.Tip_calculatorTheme
 
 class MainActivity : ComponentActivity() {
@@ -102,15 +108,22 @@ fun calculateTip(
 
 @Preview
 @Composable
-fun CardHeader(tipTotal: MutableIntState) {
+fun CardHeader(tipTotal: MutableIntState = mutableIntStateOf(0)) {
     // TODO: add text "total tip per person" above tiptotal
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp),
-        elevation = CardDefaults.cardElevation(draggedElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(draggedElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = "Total Tip Per Person", fontSize = 30.sp)
+            Spacer(modifier = Modifier.height(8.dp))
             Text(text = "$${tipTotal.intValue}", fontSize = 50.sp)
         }
     }
@@ -119,15 +132,18 @@ fun CardHeader(tipTotal: MutableIntState) {
 @Preview
 @Composable
 fun CardBody(
+    //text is the count value we are showing between buttons
     text: MutableState<String>,
     sliderPosition: MutableFloatState,
     numOfPeopleCount: MutableIntState,
     tipTotal: MutableIntState
 ) {
     Column {
+        val focusRequester = remember { FocusRequester() }
+        var focusManager = LocalFocusManager.current
         OutlinedTextField(
             //Todo:remove focus on keyboard hide
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
             value = text.value,
             onValueChange = {
                 text.value = it; calculateTip(
@@ -142,7 +158,11 @@ fun CardBody(
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.Done,
             ),
-            keyboardActions = KeyboardActions.Default,
+            keyboardActions = KeyboardActions(
+                onDone={
+                    focusManager.clearFocus()
+                }
+            ),
         )
         Spacer(modifier = Modifier.height(16.dp))
         if (text.value != "") {
@@ -160,21 +180,18 @@ fun CardBody(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ElevatedButton(onClick = {
+                        CustomElevatedButton(onClick = {
                             numOfPeopleCount.intValue += 1
                             calculateTip(tipTotal, sliderPosition, text, numOfPeopleCount)
-                        }) {
-                            Icon(Icons.Filled.Add, contentDescription = "Add")
-                        }
+                        }, icon = Icons.Default.Add, contentDescription = "Add")
                         Text("${numOfPeopleCount.intValue}")
-                        ElevatedButton(onClick = {
+                        CustomElevatedButton(onClick = {
                             if (numOfPeopleCount.intValue > 1) {
                                 numOfPeopleCount.intValue -= 1
                                 calculateTip(tipTotal, sliderPosition, text, numOfPeopleCount)
                             }
-                        }) {
-                            Icon(Icons.Default.Remove, contentDescription = "Remove")
-                        }
+                        }, icon = Icons.Default.Remove, contentDescription = "Remove")
+
                     }
                     Text("Tip %", fontSize = 16.sp)
                     Column(
